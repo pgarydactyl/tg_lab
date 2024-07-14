@@ -1,0 +1,6 @@
+[project]
+name = "tg_lab"
+authors = [{"Gary Chen", email="gary.kj.chen@gmail.com"}]
+description = "software suite for Tiangang lab"
+readme = "README.md"
+requires-python = ">3.10"

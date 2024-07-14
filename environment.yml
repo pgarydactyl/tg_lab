@@ -1,0 +1,7 @@
+name: tg_lab
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - numpy
+  - pyyaml
