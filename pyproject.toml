@@ -1,6 +1,3 @@
-[project]
-name = "tg_lab"
-authors = [{"Gary Chen", email="gary.kj.chen@gmail.com"}]
-description = "software suite for Tiangang lab"
-readme = "README.md"
-requires-python = ">3.10"
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel"]
+build-backend = "setuptools.build_meta"
