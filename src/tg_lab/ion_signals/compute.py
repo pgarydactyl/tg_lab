@@ -43,7 +43,7 @@ def integrate(data: np.array, row: int, col: int, r: float) -> float:
             nrow, ncol = row + dy, col + dx
             if (nrow, ncol) in seen:
                 continue
-            if nrow <= 0 or ncol <= 0:
+            if nrow < 0 or ncol < 0:
                 continue
             if nrow >= max_rows or ncol >= max_cols:
                 continue
