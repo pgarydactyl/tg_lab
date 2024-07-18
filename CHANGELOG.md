@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- options to specify what kinds of integration methods to run: [box, l1, l2]
+
 ## [v0.1.0] - 2024-07-15
 
 ### Added
