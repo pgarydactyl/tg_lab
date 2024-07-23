@@ -41,9 +41,18 @@ import tg_lab.ion_signals.compute as ipc
 def entry_point(
     input_file: str,
     output_dir: str,
-    output_target: str,
-    integration_fns: List[str],
+    output_target: str = "ion-signals",
+    integration_fns: List[str] = ["box"],
 ) -> None:
+    """
+    Processes an ion image data file and writes out the results
+
+    Args:
+        input_file: ion image data file
+        output_dir: directory to write output to
+        output_target: file name to write output to
+        integration_fns: list of integration functions to sum ion image data
+    """
     with open(input_file, "r") as f:
         data = np.loadtxt(f, delimiter=",")
 
