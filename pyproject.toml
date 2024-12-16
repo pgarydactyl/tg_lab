@@ -8,20 +8,20 @@ version = "0.0.1"
 authors = [{ name = "Gary Chen", email = "gary.kj.chen@gmail.com" }]
 description = "software suite for Yang Tiangang lab"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10, <3.13"
 license = {text = "MIT"}
 keywords = []
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
-dependencies = ["numpy", "scikit-image", "polars"]
+dependencies = ["numpy", "scikit-image", "polars", "matplotlib", "numba", "imagingcontrol4"]
 
 [project.optional-dependencies]
 cli = ["tyro"]
 
 [project.scripts]
-ion-signal-cli = "ion_signals:cli"
+ion-integration-cli = "ion_integration:cli"
 
 [project.urls]
 Repository = "https://github.com/pgarydactyl/tg_lab"
