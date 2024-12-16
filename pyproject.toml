@@ -1,3 +1,31 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel"]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "tg_lab"
+version = "0.0.1"
+authors = [{ name = "Gary Chen", email = "gary.kj.chen@gmail.com" }]
+description = "software suite for Yang Tiangang lab"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = []
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+dependencies = ["numpy", "scikit-image", "polars"]
+
+[project.optional-dependencies]
+cli = ["tyro"]
+
+[project.scripts]
+ion-signal-cli = "ion_signals:cli"
+
+[project.urls]
+Repository = "https://github.com/pgarydactyl/tg_lab"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true

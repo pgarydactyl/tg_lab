@@ -1,15 +1,21 @@
-from collections import deque, defaultdict
+from collections import defaultdict, deque
+from enum import Enum
 from functools import partial
-from typing import List
 
 import numpy as np
 import polars as pl
 from skimage import feature
 
 
+class IntegrationFns(str, Enum):
+    BOX = "box"
+    L1 = "l1"
+    L2 = "l2"
+
+
 def get_ion_signals(
     data: np.array,
-    integration_fns: List[str] = ["box"],
+    integration_fns: list[IntegrationFns] = [IntegrationFns.BOX],
     **kwargs,
 ) -> pl.DataFrame:
     """
@@ -122,7 +128,7 @@ def _integrate_norm(data: np.array, row: int, col: int, r: float, **kwargs) -> f
 
 
 _integration_fns = {
-    "l1": partial(_integrate_norm, ord=1),
-    "l2": partial(_integrate_norm, ord=2),
-    "box": _integrate_box,
+    IntegrationFns.BOX.value: _integrate_box,
+    IntegrationFns.L1.value: partial(_integrate_norm, ord=1),
+    IntegrationFns.L2.value: partial(_integrate_norm, ord=2),
 }

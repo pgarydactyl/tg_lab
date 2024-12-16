@@ -9,7 +9,7 @@ How to setup the python environment and install the package to run its functiona
 Have conda installed and run the following commands in a terminal while in the top level project directory `tg_lab`
 
 ```
-conda env create -f environment.yml
+conda env create --file=environment.yml
 conda activate tg_lab
 pip install -e .
 ```
