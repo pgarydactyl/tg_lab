@@ -20,7 +20,7 @@ class EventCountConfig:
     multiply_factor: int = 10
     int_offset: int = 10
     event_size: int = 1
-    keyboard: bool = False
+    keyboard_control: bool = False
 
     def __post_init__(self):
         date = datetime.datetime.now().strftime("%Y%m%d")
@@ -36,14 +36,15 @@ def entry_point(config: EventCountConfig):
         json.dump(asdict(config), f, indent=4)
 
     process_on_trigger(
-        str(path),
-        config.threshold,
-        config.mode,
-        config.nxnarea,
-        config.multiply_factor,
-        config.int_offset,
-        config.event_size,
-        config.keyboard,
+        output_dir=str(path),
+        max_images=config.max_images,
+        threshold=config.threshold,
+        mode=config.mode,
+        nxnarea=config.nxnarea,
+        multiply_factor=config.multiply_factor,
+        int_offset=config.int_offset,
+        event_size=config.event_size,
+        keyboard_control=config.keyboard_control,
     )
 
 

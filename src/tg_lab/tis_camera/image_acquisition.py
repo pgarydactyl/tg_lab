@@ -21,7 +21,7 @@ def process_on_trigger(
     multiply_factor,
     int_offset,
     event_size=1,
-    keyboard=False,
+    keyboard_control=False,
 ):
     # Let the user select one of the connected cameras
     device_list = ic4.DeviceEnum.devices()
@@ -47,19 +47,19 @@ def process_on_trigger(
     map.set_value(ic4.PropId.TRIGGER_MODE, "On")
 
     event = threading.Event()
-    image_counter = 0
-    event_counter = 0
-    sum_arr = np.zeros(
-        (
-            grabber.device_property_map.get_value_int(ic4.PropId.HEIGHT),
-            grabber.device_property_map.get_value_int(ic4.PropId.WIDTH),
-        )
-    )
 
     # Define a listener class to receive queue sink notifications
     class Listener(ic4.QueueSinkListener):
         def __init__(self):
             self._start_time = datetime.datetime.now()
+            self.image_counter = 0
+            self.event_counter = 0
+            self.sum_arr = np.zeros(
+                (
+                    grabber.device_property_map.get_value_int(ic4.PropId.HEIGHT),
+                    grabber.device_property_map.get_value_int(ic4.PropId.WIDTH),
+                )
+            )
 
         def sink_connected(
             self,
@@ -81,25 +81,25 @@ def process_on_trigger(
                 arr, threshold, mode, nxnarea, multiply_factor, int_offset, event_size
             )
 
-            sum_arr += event_count
+            self.sum_arr += event_count
 
-            event_counter += num_events
-            image_counter += 1
-            if image_counter == max_images:
+            self.event_counter += num_events
+            self.image_counter += 1
+            if self.image_counter == max_images:
                 event.set()
 
         def write_out(self, output_dir: str):
             output_dir = Path(output_dir)
             end_time = datetime.datetime.now()
             metadata = {
-                "image_count": image_counter,
-                "event_count": event_counter,
-                "image_shape": sum_arr.shape,
+                "image_count": self.image_counter,
+                "event_count": self.event_counter,
+                "image_shape": self.sum_arr.shape,
                 "start_time": self._start_time.strftime("%Y/%m/%d, %H:%M:%S"),
                 "end_time": end_time.strftime("%Y/%m/%d, %H:%M:%S"),
                 "elapsed_time (s)": (end_time - self._start_time).total_seconds(),
             }
-            np.savetxt(output_dir / "event_count.csv", sum_arr)
+            np.savetxt(output_dir / "event_count.csv", self.sum_arr)
             with open(output_dir / "metadata.json", "w") as f:
                 json.dump(metadata, f, indent=4)
 
@@ -112,15 +112,16 @@ def process_on_trigger(
     # Start the video stream into the sink
     grabber.stream_setup(sink)
     msg = "Input hardware triggers"
-    if keyboard:
+    if keyboard_control:
         msg += ", or press ENTER to issue a software trigger"
+        msg += "\nPress q + ENTER to quit"
 
     print("Stream started.")
     print("Waiting for triggers")
     print()
     print(msg)
-    print("Press q + ENTER to quit")
 
+    # define asynchronous thread worker that waits for an event to be set to end and write out results
     def worker():
         event.wait()
         grabber.stream_stop()
@@ -130,7 +131,7 @@ def process_on_trigger(
     thread = threading.Thread(target=worker)
     thread.start()
 
-    if keyboard:
+    if keyboard_control:
         while input() != "q":
             map.execute_command(ic4.PropId.TRIGGER_SOFTWARE)
         event.set()
