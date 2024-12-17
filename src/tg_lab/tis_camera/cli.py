@@ -20,7 +20,7 @@ class EventCountConfig:
     multiply_factor: int = 10
     int_offset: int = 10
     event_size: int = 1
-    debug_mode: bool = False
+    keyboard: bool = False
 
     def __post_init__(self):
         date = datetime.datetime.now().strftime("%Y%m%d")
@@ -43,7 +43,7 @@ def entry_point(config: EventCountConfig):
         config.multiply_factor,
         config.int_offset,
         config.event_size,
-        config.debug_mode,
+        config.keyboard,
     )
 
 

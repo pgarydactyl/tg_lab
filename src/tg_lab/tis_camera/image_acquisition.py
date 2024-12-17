@@ -1,5 +1,6 @@
 import datetime
 import json
+import threading
 from pathlib import Path
 
 import imagingcontrol4 as ic4
@@ -20,7 +21,7 @@ def process_on_trigger(
     multiply_factor,
     int_offset,
     event_size=1,
-    debug_mode=False,
+    keyboard=False,
 ):
     # Let the user select one of the connected cameras
     device_list = ic4.DeviceEnum.devices()
@@ -45,6 +46,7 @@ def process_on_trigger(
     # Enable trigger mode
     map.set_value(ic4.PropId.TRIGGER_MODE, "On")
 
+    event = threading.Event()
     image_counter = 0
     event_counter = 0
     sum_arr = np.zeros(
@@ -83,6 +85,8 @@ def process_on_trigger(
 
             event_counter += num_events
             image_counter += 1
+            if image_counter == max_images:
+                event.set()
 
         def write_out(self, output_dir: str):
             output_dir = Path(output_dir)
@@ -108,7 +112,7 @@ def process_on_trigger(
     # Start the video stream into the sink
     grabber.stream_setup(sink)
     msg = "Input hardware triggers"
-    if debug_mode:
+    if keyboard:
         msg += ", or press ENTER to issue a software trigger"
 
     print("Stream started.")
@@ -117,15 +121,18 @@ def process_on_trigger(
     print(msg)
     print("Press q + ENTER to quit")
 
-    if debug_mode:
+    def worker():
+        event.wait()
+        grabber.stream_stop()
+        listener.write_out(output_dir=output_dir)
+        grabber.device_close()
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+
+    if keyboard:
         while input() != "q":
             map.execute_command(ic4.PropId.TRIGGER_SOFTWARE)
+        event.set()
 
-    else:
-        while image_counter < max_images:
-            pass
-
-    # We have to call streamStop before exiting the function, to make sure the listener object is not destroyed before the stream is stopped
-    grabber.stream_stop()
-    listener.write_out(output_dir=output_dir)
-    grabber.device_close()
+    thread.join()
