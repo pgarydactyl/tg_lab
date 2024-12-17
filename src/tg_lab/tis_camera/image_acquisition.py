@@ -121,7 +121,8 @@ def process_on_trigger(
     print()
     print(msg)
 
-    # define asynchronous thread worker that waits for an event to be set to end and write out results
+    # define asynchronous thread worker that waits for an event to be set to end the program
+    # this event can be set from various locations under various conditions
     def worker():
         event.wait()
         grabber.stream_stop()
@@ -131,6 +132,7 @@ def process_on_trigger(
     thread = threading.Thread(target=worker)
     thread.start()
 
+    # keyboard exiting can also be set with a thread in the future
     if keyboard_control:
         while input() != "q":
             map.execute_command(ic4.PropId.TRIGGER_SOFTWARE)

@@ -1,7 +1,6 @@
-import tyro
-
 import matplotlib as plt
 import matplotlib.colors as mcolors
+import tyro
 from matplotlib.colors import TwoSlopeNorm
 
 plt.figure(figsize=(16, 10))
