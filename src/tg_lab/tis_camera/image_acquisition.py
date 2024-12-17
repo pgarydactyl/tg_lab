@@ -12,7 +12,14 @@ from tg_lab.ion_event_counting.fastvimprocess import event_counting
     api_log_level=ic4.LogLevel.INFO, log_targets=ic4.LogTarget.STDERR
 )
 def process_on_trigger(
-    output_dir, threshold, mode, nxnarea, multiply_factor, int_offset, event_size=1
+    output_dir,
+    threshold,
+    mode,
+    nxnarea,
+    multiply_factor,
+    int_offset,
+    event_size=1,
+    debug_mode=False,
 ):
     # Let the user select one of the connected cameras
     device_list = ic4.DeviceEnum.devices()
@@ -40,8 +47,14 @@ def process_on_trigger(
     # Define a listener class to receive queue sink notifications
     class Listener(ic4.QueueSinkListener):
         def __init__(self):
-            self.counter = 0
-            self.sum_arr = None
+            self.image_counter = 0
+            self.event_counter = 0
+            self.sum_arr = np.zeros(
+                (
+                    grabber.device_property_map.get_value_int(ic4.PropId.HEIGHT),
+                    grabber.device_property_map.get_value_int(ic4.PropId.WIDTH),
+                )
+            )
             self._start_time = datetime.datetime.now()
 
         def sink_connected(
@@ -57,25 +70,26 @@ def process_on_trigger(
             # Get the queued image buffer
             buffer = sink.pop_output_buffer()
 
+            # image array can come out as multi dimensional, take a grayscale mean
             arr = buffer.numpy_wrap().mean(
                 axis=2
-            )  # numpy array can come out as multi dimensional, take a grayscale mean
+            )
 
-            event_count, _ = event_counting(
+            event_count, num_events = event_counting(
                 arr, threshold, mode, nxnarea, multiply_factor, int_offset, event_size
             )
 
-            if self.sum_arr is None:
-                self.sum_arr = np.zeros(event_count.shape)
             self.sum_arr += event_count
 
-            self.counter = self.counter + 1
+            self.event_counter += num_events
+            self.image_counter += 1
 
-        def write_out(self, output_dir):
+        def write_out(self, output_dir: str):
             output_dir = Path(output_dir)
             end_time = datetime.datetime.now()
             metadata = {
-                "image_counter": self.counter,
+                "image_count": self.image_counter,
+                "event_count": self.event_counter,
                 "image_shape": self.sum_arr.shape,
                 "start_time": self._start_time.strftime("%Y/%m/%d, %H:%M:%S"),
                 "end_time": end_time.strftime("%Y/%m/%d, %H:%M:%S"),
@@ -85,7 +99,7 @@ def process_on_trigger(
             with open(output_dir / "metadata.json", "w") as f:
                 json.dump(metadata, f, indent=4)
 
-    # Create an instance of the listener type defined above, specifying a partial file name
+    # Create an instance of the listener type defined above
     listener = Listener()
 
     # Create a QueueSink to capture all images arriving from the video capture device
@@ -93,16 +107,20 @@ def process_on_trigger(
 
     # Start the video stream into the sink
     grabber.stream_setup(sink)
+    msg = "Input hardware triggers"
+    if debug_mode:
+        msg += ", or press ENTER to issue a software trigger"
 
     print("Stream started.")
     print("Waiting for triggers")
     print()
-    print("Input hardware triggers, or press ENTER to issue a software trigger")
+    print(msg)
     print("Press q + ENTER to quit")
 
     while input() != "q":
-        # Execute software trigger
-        map.execute_command(ic4.PropId.TRIGGER_SOFTWARE)
+        if debug_mode:
+            # Execute software trigger if debug mode is on
+            map.execute_command(ic4.PropId.TRIGGER_SOFTWARE)
 
     # We have to call streamStop before exiting the function, to make sure the listener object is not destroyed before the stream is stopped
     grabber.stream_stop()
