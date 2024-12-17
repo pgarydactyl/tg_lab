@@ -2,6 +2,7 @@ from dataclasses import dataclass, asdict
 import json
 from pathlib import Path
 import os
+import datetime
 
 import tyro
 
@@ -12,6 +13,7 @@ from tg_lab.utils import get_event_id
 @dataclass
 class EventCountConfig:
     output_dir: str
+    max_images: int = 100
     threshold: float = 100
     mode: int = 1
     nxnarea: int = 5
@@ -21,12 +23,14 @@ class EventCountConfig:
     debug_mode: bool = False
 
     def __post_init__(self):
-        self.output_dir = str(Path(self.output_dir).absolute())
+        date = datetime.datetime.now().strftime("%Y%m%d")
+        self.output_dir = f"D:\\Experimental_Data\\{date}\\{Path(self.output_dir)}"
 
 
 def entry_point(config: EventCountConfig):
     path = Path(config.output_dir) / get_event_id(name="event_count")
     os.makedirs(path)
+    print(f"    >Output location: {path}")
 
     with open(path / "config.json", "w") as f:
         json.dump(asdict(config), f, indent=4)

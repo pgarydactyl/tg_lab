@@ -13,6 +13,7 @@ from tg_lab.ion_event_counting.fastvimprocess import event_counting
 )
 def process_on_trigger(
     output_dir,
+    max_images,
     threshold,
     mode,
     nxnarea,
@@ -44,17 +45,18 @@ def process_on_trigger(
     # Enable trigger mode
     map.set_value(ic4.PropId.TRIGGER_MODE, "On")
 
+    image_counter = 0
+    event_counter = 0
+    sum_arr = np.zeros(
+        (
+            grabber.device_property_map.get_value_int(ic4.PropId.HEIGHT),
+            grabber.device_property_map.get_value_int(ic4.PropId.WIDTH),
+        )
+    )
+
     # Define a listener class to receive queue sink notifications
     class Listener(ic4.QueueSinkListener):
         def __init__(self):
-            self.image_counter = 0
-            self.event_counter = 0
-            self.sum_arr = np.zeros(
-                (
-                    grabber.device_property_map.get_value_int(ic4.PropId.HEIGHT),
-                    grabber.device_property_map.get_value_int(ic4.PropId.WIDTH),
-                )
-            )
             self._start_time = datetime.datetime.now()
 
         def sink_connected(
@@ -71,31 +73,29 @@ def process_on_trigger(
             buffer = sink.pop_output_buffer()
 
             # image array can come out as multi dimensional, take a grayscale mean
-            arr = buffer.numpy_wrap().mean(
-                axis=2
-            )
+            arr = buffer.numpy_wrap().mean(axis=2)
 
             event_count, num_events = event_counting(
                 arr, threshold, mode, nxnarea, multiply_factor, int_offset, event_size
             )
 
-            self.sum_arr += event_count
+            sum_arr += event_count
 
-            self.event_counter += num_events
-            self.image_counter += 1
+            event_counter += num_events
+            image_counter += 1
 
         def write_out(self, output_dir: str):
             output_dir = Path(output_dir)
             end_time = datetime.datetime.now()
             metadata = {
-                "image_count": self.image_counter,
-                "event_count": self.event_counter,
-                "image_shape": self.sum_arr.shape,
+                "image_count": image_counter,
+                "event_count": event_counter,
+                "image_shape": sum_arr.shape,
                 "start_time": self._start_time.strftime("%Y/%m/%d, %H:%M:%S"),
                 "end_time": end_time.strftime("%Y/%m/%d, %H:%M:%S"),
                 "elapsed_time (s)": (end_time - self._start_time).total_seconds(),
             }
-            np.savetxt(output_dir / "event_count.csv", self.sum_arr)
+            np.savetxt(output_dir / "event_count.csv", sum_arr)
             with open(output_dir / "metadata.json", "w") as f:
                 json.dump(metadata, f, indent=4)
 
@@ -117,10 +117,13 @@ def process_on_trigger(
     print(msg)
     print("Press q + ENTER to quit")
 
-    while input() != "q":
-        if debug_mode:
-            # Execute software trigger if debug mode is on
+    if debug_mode:
+        while input() != "q":
             map.execute_command(ic4.PropId.TRIGGER_SOFTWARE)
+
+    else:
+        while image_counter < max_images:
+            pass
 
     # We have to call streamStop before exiting the function, to make sure the listener object is not destroyed before the stream is stopped
     grabber.stream_stop()

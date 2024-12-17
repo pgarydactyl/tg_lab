@@ -15,7 +15,7 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
-dependencies = ["numpy", "scikit-image", "polars", "matplotlib", "numba", "imagingcontrol4"]
+dependencies = ["numpy", "scikit-image", "polars", "matplotlib", "numba", "imagingcontrol4", "tyro",]
 
 [project.optional-dependencies]
 cli = ["tyro"]
