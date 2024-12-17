@@ -1,9 +1,0 @@
-name: tg-lab
-channels:
-  - conda-forge
-  - nodefaults
-dependencies:
-  - numpy
-  - click
-  - polars
-  - scikit-image
