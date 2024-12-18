@@ -6,11 +6,16 @@ How to setup the python environment and install the package to run its functiona
 
 ### 1. Build the python environment
 
-Have conda installed and run the following commands in a terminal while in the top level project directory `tg_lab`
+Using `venv`, create a python environment at the root directory of the repository and activate it
 
 ```
-conda env create --file=environment.yml
-conda activate tg_lab
+python -m venv .venv
+source .venv/bin/activate
+```
+
+Install the package and its dependencies
+
+```
 pip install -e .
 ```
 
