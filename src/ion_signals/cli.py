@@ -5,7 +5,7 @@ import numpy as np
 import polars as pl
 import tyro
 
-import tg_lab.ion_signals.compute as ipc
+import tg_lab.ion_integration.compute as ipc
 
 
 @dataclass

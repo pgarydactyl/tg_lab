@@ -6,11 +6,16 @@ How to setup the python environment and install the package to run its functiona
 
 ### 1. Build the python environment
 
-Have conda installed and run the following commands in a terminal while in the top level project directory `tg_lab`
+Using `venv`, create a python environment at the root directory of the repository and activate it
 
 ```
-conda env create --file=environment.yml
-conda activate tg_lab
+python -m venv .venv
+source .venv/bin/activate
+```
+
+Install the package and its dependencies
+
+```
 pip install -e .
 ```
 
@@ -34,3 +39,12 @@ Options:
   -t, --output-target TEXT  output file name  [default: ion-signals]
   --help                    Show this message and exit.
 ```
+
+## Control 33U Series Camera with `tis_camera` module
+
+Ensure the following packages have been installed from the company [website](https://www.theimagingsource.com/en-us/product/industrial/33u/dmk33ux174/)
+- [GenTL Producer for USB3 Vision Cameras](https://www.theimagingsource.com/en-us/support/download/ic4gentlprodu3vwintis-1.3.1.501/)
+- [Device Driver for USB 33U, 37U, 38U, 32U Cameras and DFG/HDMI Converter](https://www.theimagingsource.com/en-us/support/download/icwdmuvccamtis33u-5.2.0.2768/)
+- [IC Imaging Control 4 SDK](https://www.theimagingsource.com/en-us/support/download/icimagingcontrol4win-1.2.0.2954/)
+
+Run the `tis_camera` module through the command line to capture and process images
