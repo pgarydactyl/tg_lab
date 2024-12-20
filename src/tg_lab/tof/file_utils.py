@@ -1,14 +1,23 @@
 from pathlib import Path
+from tg_lab.utils import get_event_id
 import json
+import os
 
 import numpy as np
 
 from .constants import RawIndices
 
 
-def get_files(path: str | Path, glob="*.txt"):
+def get_files(path: str | Path, glob=r"**\*.txt"):
     path = Path(path)
     yield from path.glob(glob)
+
+
+def prepare_experiment_dir(path: str | Path, name="tof"):
+    path = Path(path)
+    output_dir = path / get_event_id(name)
+    os.makedirs(output_dir)
+    return output_dir
 
 
 def parse_file_path(path: str | Path, delimiter: str = "_"):

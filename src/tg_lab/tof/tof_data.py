@@ -169,9 +169,16 @@ class TofExperimentData:
         d = {**self.__dict__, **kwargs}
         return type(self)(**d)
 
-    def get_times(self):
-        times = set([td.time for td in self.data])
-        return list(times)
+    def get_keys(self):
+        keys = {}
+        for td in self.data:
+            keys[td.time] = keys.get(td.time, [])
+            keys[td.time].append(td.run)
+        
+        for k in keys:
+            keys[k].sort()
+
+        return keys
 
     def filter_by_exclusions(self):
         data = []
@@ -206,6 +213,23 @@ class TofExperimentData:
 
         return pl.concat(combined)
 
+    def get_normalization(self):
+        peak_data: pl.DataFrame = self.get_combined_peak_data()
+        return peak_data.group_by(
+            [ExperimentIndices.REACTION_TIME.value, RawIndices.RUN.value]
+        ).agg(pl.col(PeakIndices.SUM.value).sum().alias(ExperimentIndices.NORM.value))
+
+    def get_normalized_combined_peak_data(self):
+        norm = self.get_normalization()
+        return self.get_combined_peak_data().join(
+            norm, [ExperimentIndices.REACTION_TIME.value, RawIndices.RUN.value]
+        ).with_columns(
+            (
+                pl.col(PeakIndices.SUM.value)
+                / pl.col(ExperimentIndices.NORM.value)
+            ).alias(ExperimentIndices.NORM_SUM.value)
+        )
+
     def get_aggregated_peak_data(self):
         group_by_cols = [PeakIndices.ION.value, ExperimentIndices.REACTION_TIME.value]
         agg_col = pl.col(PeakIndices.SUM.value)
@@ -220,11 +244,30 @@ class TofExperimentData:
             )
             .sort(group_by_cols)
         )
+    
+    def get_normalized_aggregated_peak_data(self):
+        group_by_cols = [PeakIndices.ION.value, ExperimentIndices.REACTION_TIME.value]
+        agg_col = pl.col(ExperimentIndices.NORM_SUM.value)
+        return (
+            self.get_normalized_combined_peak_data()
+            .group_by(group_by_cols)
+            .agg(
+                agg_col.mean().alias("mean"),
+                agg_col.std().alias("std"),
+                agg_col.sum().alias("sum"),
+                agg_col.count().alias("count")
+            )
+            .sort(group_by_cols)
+        )
 
-    def plot_raw(self, xlim=None, ylim=None):
+    def plot_raw(self, xlim=None, ylim=None, t: float | int | None = None):
         plotter = TofPlotter()
         ted = self.filter_by_exclusions()
-        for td in ted.data:
+
+        data = ted.data
+        if t is not None:
+            data = [td for td in ted.data if td.time == t]
+        for td in data:
             td.config = self.config
             fig, ax = plotter.plot_raw(
                 td=td.process(),
@@ -235,7 +278,19 @@ class TofExperimentData:
     def save_data(self, path: str | None = None):
         if path is None:
             path = self.path
-        file_utils.write_json(path, self.print_config())
+        output_dir = file_utils.prepare_experiment_dir(path)
+        ted = self.process()
+        file_utils.write_json(output_dir / "config.json", self.get_config())
+        # drop MZ_SPAN because it's a tuple and csv's cannot handle that structure
+        ted.get_normalized_combined_peak_data().drop(PeakIndices.MZ_SPAN.value).write_csv(
+            output_dir / "combined_peak_data.csv"
+        )
+        ted.get_aggregated_peak_data().write_csv(
+            output_dir / "aggregated_peak_data.csv"
+        )
+        ted.get_normalized_aggregated_peak_data().write_csv(
+            output_dir / "normalized_aggregated_peak_data.csv"
+        )
 
     def print_config(self):
         return self.config.model_dump_json(indent=4)

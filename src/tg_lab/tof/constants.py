@@ -6,6 +6,8 @@ class ExperimentIndices(str, Enum):
     TITLE = "title"
     RUN = "run"
     REACTION_TIME = "reaction_time"
+    NORM = "norm"
+    NORM_SUM = "norm_sum"
 
 
 class RawIndices(str, Enum):
