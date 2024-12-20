@@ -57,4 +57,4 @@ def parse_data(path: str | Path):
 
 def write_json(path, data):
     with open(Path(path), "w") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)

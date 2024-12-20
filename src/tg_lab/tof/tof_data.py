@@ -360,7 +360,12 @@ class TofPlotter:
             )
 
     def _plot_peaks(self, ax, td):
+        i = 0
         for row in td.peak_data.to_dicts():
+            label = None
+            if i == 0:
+                label = "peak_integration_region"
+            i += 1
             ax.fill_between(
                 row["m/z_span"],
                 0,
@@ -368,6 +373,7 @@ class TofPlotter:
                 color="r",
                 alpha=0.3,
                 transform=ax.get_xaxis_transform(),
+                label=label,
             )
 
     def plot_raw(
